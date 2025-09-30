@@ -46,10 +46,12 @@
         .input-group {
             display: flex;
             gap: 10px;
+            flex-wrap: wrap;
         }
 
         input {
             flex: 1;
+            min-width: 200px;
             padding: 15px;
             font-size: 1.1em;
             border: 2px solid #667eea;
@@ -71,6 +73,7 @@
             border-radius: 10px;
             cursor: pointer;
             transition: transform 0.2s;
+            white-space: nowrap;
         }
 
         button:hover {
@@ -224,6 +227,61 @@
             margin-top: 10px;
             padding-top: 10px;
             border-top: 1px solid #f0f0f0;
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .search-box {
+                padding: 15px;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            input {
+                width: 100%;
+                min-width: 100%;
+            }
+
+            button {
+                width: 100%;
+                padding: 15px;
+            }
+
+            .bus-board {
+                grid-template-columns: 1fr;
+            }
+
+            .bus-number {
+                font-size: 1.5em;
+            }
+
+            .arrival-time {
+                font-size: 1.5em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .bus-card {
+                padding: 15px;
+            }
+
+            .next-buses {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
