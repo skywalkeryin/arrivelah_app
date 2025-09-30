@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArriveLah - Bus Arrival Times</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .search-box {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            flex: 1;
+            padding: 15px;
+            font-size: 1.1em;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: #764ba2;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 1.1em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2em;
+            padding: 20px;
+            display: none;
+        }
+
+        .error {
+            background: #ff6b6b;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .bus-board {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .bus-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 0.3s;
+        }
+
+        .bus-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .bus-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .bus-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .bus-operator {
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        .arrival-info {
+            margin-bottom: 15px;
+        }
+
+        .arrival-label {
+            font-size: 0.8em;
+            color: #999;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .arrival-time {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .arrival-time.arriving {
+            color: #51cf66;
+        }
+
+        .arrival-time.soon {
+            color: #ffa94d;
+        }
+
+        .next-buses {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .next-bus {
+            flex: 1;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .next-bus-label {
+            font-size: 0.7em;
+            color: #999;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .next-bus-time {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .bus-features {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .feature-badge {
+            background: #e9ecef;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 0.75em;
+            color: #495057;
+        }
+
+        .load-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .load-SEA { background: #51cf66; }
+        .load-SDA { background: #ffa94d; }
+        .load-LSD { background: #ff6b6b; }
+
+        .route-info {
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚌 ArriveLah</h1>
+            <p>Real-time Bus Arrival Information</p>
+        </header>
+
+        <div class="search-box">
+            <div class="input-group">
+                <input type="text" id="busStopId" placeholder="Enter Bus Stop ID (e.g., 66271)" value="66271">
+                <button onclick="fetchBusArrival()">Get Arrivals</button>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">Loading bus arrival data...</div>
+        <div class="error" id="error"></div>
+        <div class="bus-board" id="busBoard"></div>
+    </div>
+
+    <script>
+        function formatDuration(durationMs) {
+            const minutes = Math.floor(durationMs / 60000);
+            if (minutes < 1) return 'Arriving';
+            if (minutes === 1) return '1 min';
+            return `${minutes} mins`;
+        }
+
+        function getLoadText(load) {
+            const loadMap = {
+                'SEA': 'Seats Available',
+                'SDA': 'Standing Available',
+                'LSD': 'Limited Standing'
+            };
+            return loadMap[load] || load;
+        }
+
+        function getFeatureText(feature) {
+            const featureMap = {
+                'WAB': 'Wheelchair Accessible'
+            };
+            return featureMap[feature] || feature;
+        }
+
+        function getTypeText(type) {
+            const typeMap = {
+                'SD': 'Single Deck',
+                'DD': 'Double Deck',
+                'BD': 'Bendy'
+            };
+            return typeMap[type] || type;
+        }
+
+        function createBusCard(service) {
+            const next = service.next;
+            const subsequent = service.subsequent;
+            const next2 = service.next2;
+            const next3 = service.next3;
+
+            if (!next) return '';
+
+            const nextMins = Math.floor(next.duration_ms / 60000);
+            const timeClass = nextMins < 1 ? 'arriving' : nextMins < 5 ? 'soon' : '';
+
+            let nextBusesHtml = '';
+            if (subsequent) {
+                nextBusesHtml += `
+                    <div class="next-bus">
+                        <div class="next-bus-label">Next 2</div>
+                        <div class="next-bus-time">${formatDuration(subsequent.duration_ms)}</div>
+                    </div>
+                `;
+            }
+            if (next3) {
+                nextBusesHtml += `
+                    <div class="next-bus">
+                        <div class="next-bus-label">Next 3</div>
+                        <div class="next-bus-time">${formatDuration(next3.duration_ms)}</div>
+                    </div>
+                `;
+            }
+
+            const features = [];
+            if (next.load) features.push(`<span class="load-indicator load-${next.load}"></span>${getLoadText(next.load)}`);
+            if (next.feature) features.push(getFeatureText(next.feature));
+            if (next.type) features.push(getTypeText(next.type));
+
+            return `
+                <div class="bus-card">
+                    <div class="bus-header">
+                        <div class="bus-number">${service.no}</div>
+                        <div class="bus-operator">${service.operator}</div>
+                    </div>
+                    <div class="arrival-info">
+                        <div class="arrival-label">Next Bus</div>
+                        <div class="arrival-time ${timeClass}">${formatDuration(next.duration_ms)}</div>
+                    </div>
+                    ${nextBusesHtml ? `<div class="next-buses">${nextBusesHtml}</div>` : ''}
+                    ${features.length > 0 ? `
+                        <div class="bus-features">
+                            ${features.map(f => `<div class="feature-badge">${f}</div>`).join('')}
+                        </div>
+                    ` : ''}
+                    ${next.origin_code ? `
+                        <div class="route-info">
+                            Route: ${next.origin_code} → ${next.destination_code}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        async function fetchBusArrival() {
+            const busStopId = document.getElementById('busStopId').value.trim();
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const busBoard = document.getElementById('busBoard');
+
+            if (!busStopId) {
+                error.textContent = 'Please enter a bus stop ID';
+                error.style.display = 'block';
+                return;
+            }
+
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            busBoard.innerHTML = '';
+
+            try {
+                const response = await fetch(`https://arrivelah2.busrouter.sg/?id=${busStopId}`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (!data.services || data.services.length === 0) {
+                    error.textContent = 'No bus services found for this stop';
+                    error.style.display = 'block';
+                    loading.style.display = 'none';
+                    return;
+                }
+
+                busBoard.innerHTML = data.services.map(service => createBusCard(service)).join('');
+                loading.style.display = 'none';
+            } catch (err) {
+                error.textContent = `Error fetching bus data: ${err.message}`;
+                error.style.display = 'block';
+                loading.style.display = 'none';
+            }
+        }
+
+        // Allow Enter key to trigger search
+        document.getElementById('busStopId').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                fetchBusArrival();
+            }
+        });
+
+        // Load default bus stop on page load
+        window.addEventListener('load', function() {
+            fetchBusArrival();
+        });
+    </script>
+</body>
+</html>
