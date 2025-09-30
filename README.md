@@ -2,6 +2,8 @@
 
 A simple web application that displays real-time bus arrival times for Singapore bus stops.
 
+🚀 **[Live Demo](https://arrivelah-app.pages.dev/arrivelah)**
+
 ## Description
 
 Enter a Singapore bus stop ID to view the arrival times for each bus service at that stop.

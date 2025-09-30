@@ -47,6 +47,85 @@
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .save-favorite-btn {
+            background: #51cf66;
+            padding: 8px 15px;
+            font-size: 0.9em;
+        }
+
+        .favorites-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .favorites-title {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .favorites-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .favorite-item {
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 2px solid transparent;
+        }
+
+        .favorite-item:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+        }
+
+        .favorite-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .favorite-id {
+            color: #999;
+            font-size: 0.85em;
+        }
+
+        .delete-favorite {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            font-size: 0.8em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .delete-favorite:hover {
+            background: #ff5252;
+        }
+
+        .no-favorites {
+            color: #999;
+            font-size: 0.9em;
+            font-style: italic;
         }
 
         input {
@@ -296,6 +375,14 @@
             <div class="input-group">
                 <input type="text" id="busStopId" placeholder="Enter Bus Stop ID (e.g., 66271)" value="66271">
                 <button onclick="fetchBusArrival()">Get Arrivals</button>
+                <button class="save-favorite-btn" onclick="saveFavorite()">⭐ Save Favorite</button>
+            </div>
+
+            <div class="favorites-section">
+                <div class="favorites-title">⭐ Favorite Stops</div>
+                <div class="favorites-list" id="favoritesList">
+                    <div class="no-favorites">No favorite stops yet</div>
+                </div>
             </div>
         </div>
 
@@ -305,6 +392,78 @@
     </div>
 
     <script>
+        // LocalStorage functions for favorites
+        function getFavorites() {
+            const favorites = localStorage.getItem('favoriteBusStops');
+            return favorites ? JSON.parse(favorites) : [];
+        }
+
+        function saveFavorites(favorites) {
+            localStorage.setItem('favoriteBusStops', JSON.stringify(favorites));
+        }
+
+        function saveFavorite() {
+            const busStopId = document.getElementById('busStopId').value.trim();
+            if (!busStopId) {
+                alert('Please enter a bus stop ID first');
+                return;
+            }
+
+            const favorites = getFavorites();
+
+            // Check if already exists
+            if (favorites.some(f => f.id === busStopId)) {
+                alert('This bus stop is already in your favorites');
+                return;
+            }
+
+            const name = prompt('Enter a name for this bus stop:', `Stop ${busStopId}`);
+            if (name === null) return; // User cancelled
+
+            favorites.push({
+                id: busStopId,
+                name: name || `Stop ${busStopId}`
+            });
+
+            saveFavorites(favorites);
+            renderFavorites();
+            alert('Bus stop added to favorites!');
+        }
+
+        function deleteFavorite(busStopId, event) {
+            event.stopPropagation();
+            if (confirm('Remove this bus stop from favorites?')) {
+                const favorites = getFavorites().filter(f => f.id !== busStopId);
+                saveFavorites(favorites);
+                renderFavorites();
+            }
+        }
+
+        function loadFavorite(busStopId) {
+            document.getElementById('busStopId').value = busStopId;
+            fetchBusArrival();
+        }
+
+        function renderFavorites() {
+            const favorites = getFavorites();
+            const favoritesList = document.getElementById('favoritesList');
+
+            if (favorites.length === 0) {
+                favoritesList.innerHTML = '<div class="no-favorites">No favorite stops yet</div>';
+                return;
+            }
+
+            favoritesList.innerHTML = favorites.map(fav => `
+                <div class="favorite-item" onclick="loadFavorite('${fav.id}')">
+                    <div>
+                        <div class="favorite-name">${fav.name}</div>
+                        <div class="favorite-id">${fav.id}</div>
+                    </div>
+                    <button class="delete-favorite" onclick="deleteFavorite('${fav.id}', event)" title="Remove">×</button>
+                </div>
+            `).join('');
+        }
+
         function formatDuration(durationMs) {
             const minutes = Math.floor(durationMs / 60000);
             if (minutes < 1) return 'Arriving';
@@ -444,8 +603,9 @@
             }
         });
 
-        // Load default bus stop on page load
+        // Load default bus stop and favorites on page load
         window.addEventListener('load', function() {
+            renderFavorites();
             fetchBusArrival();
         });
     </script>
